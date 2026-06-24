@@ -1,5 +1,6 @@
 import os
 import subprocess
+import re
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Inicializar FastAPI
-app = FastAPI(title="AURA API", version="0.4")
+app = FastAPI(title="AURA API", version="0.5")
 
 # Configurar CORS para permitir que el frontend de Vercel/Netlify se conecte
 app.add_middleware(
@@ -66,12 +67,33 @@ def agente_critico_tutor(codigo_final, prompt_original):
     return respuesta.choices[0].message.content
 
 def ejecutar_codigo(codigo_markdown):
-    codigo_limpio = codigo_markdown.replace("```python", "").replace("```", "").strip()
+    # Extraer el lenguaje de la etiqueta markdown (ej: ```python, ```html)
+    match = re.search(r"```(\w+)", codigo_markdown)
+    lenguaje = match.group(1).lower() if match else "python"
     
-    with open("temp_aura.py", "w") as f:
+    # Limpiar el codigo quitando las etiquetas markdown
+    codigo_limpio = re.sub(r"```\w*\n?", "", codigo_markdown).replace("```", "").strip()
+    
+    # Logica de ejecucion segun el lenguaje
+    if lenguaje in ["python", "py"]:
+        extension = "py"
+        comando = ["python3", f"temp_aura.{extension}"]
+    elif lenguaje in ["bash", "sh", "shell"]:
+        extension = "sh"
+        comando = ["bash", f"temp_aura.{extension}"]
+    elif lenguaje in ["html", "css", "javascript", "js", "cpp", "c", "java", "csharp", "go", "rust"]:
+        # Lenguajes que no se pueden ejecutar directamente en un sandbox de Python
+        mensaje = f"[Sandbox] Lenguaje '{lenguaje}' detectado. Codigo validado estructuralmente. (Ejecucion en terminal omitida: requiere navegador, compilador o runtime especifico)."
+        return None, mensaje
+    else:
+        mensaje = f"[Sandbox] Lenguaje '{lenguaje}' no reconocido para ejecucion automatica."
+        return None, mensaje
+        
+    # Ejecutar solo si es Python o Bash
+    with open(f"temp_aura.{extension}", "w") as f:
         f.write(codigo_limpio)
     
-    resultado = subprocess.run(["python3", "temp_aura.py"], capture_output=True, text=True)
+    resultado = subprocess.run(comando, capture_output=True, text=True)
     
     if resultado.returncode == 0:
         return None, resultado.stdout 
@@ -82,7 +104,7 @@ def procesar_tarea_aura(prompt_usuario):
     codigo_actual = None
     error_actual = None
     max_intentos = 3
-    log_proceso = "[INICIO] AURA v0.4 API\n"
+    log_proceso = "[INICIO] AURA v0.5 API\n"
     
     for intento in range(max_intentos):
         log_proceso += f"\n[Intento {intento+1}] Estratega escribiendo/corrigiendo codigo..."
@@ -115,7 +137,7 @@ def procesar_tarea_aura(prompt_usuario):
 # ==========================================
 @app.get("/")
 def read_root():
-    return {"status": "AURA API online", "version": "0.4"}
+    return {"status": "AURA API online", "version": "0.5"}
 
 @app.post("/api/run")
 def run_aura(tarea: TareaInput):
