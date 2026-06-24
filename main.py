@@ -34,15 +34,16 @@ class TareaInput(BaseModel):
 # ==========================================
 def agente_estratega(prompt_usuario, error_previo=None, codigo_previo=None):
     instruccion = f"""
-    Eres el 'Agente Estratega' de AURA. Escribe codigo Python para: {prompt_usuario}.
-    Devuelve UNICAMENTE el codigo dentro de un bloque markdown (```python ... ```).
+    Eres el 'Agente Estratega' de AURA. Escribe codigo para resolver la siguiente tarea: {prompt_usuario}.
+    Usa el lenguaje de programacion que el usuario te pida. Si no especifica ninguno, usa Python por defecto.
+    Devuelve UNICAMENTE el codigo dentro de un bloque markdown (ej: ```python ... ```, ```html ... ```, ```cpp ... ```).
     """
     if error_previo:
         instruccion = f"""
         Eres el 'Agente Estratega' de AURA. Tu codigo anterior fallo.
         Codigo anterior: {codigo_previo}
         Error de ejecucion: {error_previo}
-        Corrige el codigo. Devuelve UNICAMENTE el codigo corregido en un bloque markdown (```python ... ```).
+        Corrige el codigo. Devuelve UNICAMENTE el codigo corregido en su bloque markdown correspondiente.
         """
     
     respuesta = groq_client.chat.completions.create(
