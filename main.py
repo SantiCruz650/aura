@@ -84,7 +84,7 @@ def ejecutar_codigo(codigo_markdown):
         comando = ["bash", f"temp_aura.{extension}"]
     elif lenguaje in ["html", "css", "javascript", "js", "cpp", "c", "java", "csharp", "go", "rust"]:
         # Lenguajes que no se pueden ejecutar directamente en un sandbox de Python
-        mensaje = f"[Sandbox] Lenguaje '{lenguaje}' detectado. Codigo validado estructuralmente. (Ejecucion en terminal omitida: requiere navegador, compilador o runtime especifico)."
+        mensaje = f"[Sandbox] Lenguaje '{lenguaje}' detectado. Vista previa en navegador habilitada debajo del codigo."
         return None, mensaje
     else:
         mensaje = f"[Sandbox] Lenguaje '{lenguaje}' no reconocido para ejecucion automatica."
